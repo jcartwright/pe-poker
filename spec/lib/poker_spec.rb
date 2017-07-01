@@ -6,7 +6,5 @@ RSpec.describe Poker do
               '../../spec/fixtures', 'poker.txt')
   }
 
-  it "should init with a game file" do
-    expect(Poker.new(game_file))
-  end
+  it "plays a game based on the game file"
 end

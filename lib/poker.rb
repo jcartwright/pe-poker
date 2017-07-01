@@ -1,5 +1,4 @@
-class Poker
-  def initialize(game_file)
-    @all_hands = IO.read(game_file)
-  end
+module Poker
+  autoload :Game, "poker/game"
+  autoload :Hand, "poker/hand"
 end
