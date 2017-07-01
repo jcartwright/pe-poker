@@ -25,4 +25,16 @@ RSpec.describe Poker::Hand do
       end
     end
   end
+
+  context "#face_value" do
+    it "returns the sum of the face values of all cards" do
+      {
+        36 => %w(5H 5C 6S 7S KD), #=> 5, 5, 6, 7, 13
+        31 => %w(2C 3S 8S 8D TD), #=> 2, 3, 8, 8, 10
+        54 => %w(KH 4H AS JS QS)  #=> 13, 4, 14, 11, 12
+      }.each do |val, cards|
+        expect(Poker::Hand.new(cards).face_value).to eq(val)
+      end
+    end
+  end
 end
