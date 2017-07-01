@@ -4,9 +4,9 @@ RSpec.describe Poker::Hand do
 
   context "#initialize" do
     it "succeeds with a valid array of cards" do
-      cards = %w(8C TS KC 9H 4S)
-      hand = Poker::Hand.new(cards)
-      expect(hand.cards).to eq(cards)
+      card_codes = %w(8C TS KC 9H 4S)
+      hand = Poker::Hand.new(card_codes)
+      expect(hand.cards.map(&:card_code)).to eq(card_codes)
     end
 
     it "fails with an invalid set of cards" do

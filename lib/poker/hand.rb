@@ -4,21 +4,12 @@ class Poker::Hand
   attr_reader :cards
 
   def initialize(cards)
-    @cards = validate_cards!(cards)
+    @cards = parse_cards(validate_cards!(cards))
   end
 
   def face_value
     cards.reduce(0) { |sum, card|
-      val = card.to_s[0] # first character is val/face
-      sum + case
-      when %w(2 3 4 5 6 7 8 9).include?(val) then val.to_i
-      when val == 'T' then 10
-      when val == 'J' then 11
-      when val == 'Q' then 12
-      when val == 'K' then 13
-      when val == 'A' then 14
-      else 0
-      end
+      sum + card.weight
     }
   end
 
@@ -35,6 +26,12 @@ class Poker::Hand
     end
 
     cards
+  end
+
+  def parse_cards(cards)
+    cards.map do |card_code|
+      Poker::Card.new(card_code)
+    end
   end
 
 end
