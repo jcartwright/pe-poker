@@ -6,8 +6,8 @@ module Poker
     attr_reader :card_code, :value, :suit, :weight
 
     def initialize(card_code)
-      @card_code = card_code
-      @value, @suit = validate_code!(card_code)
+      @card_code = normalize_code(card_code)
+      @value, @suit = validate_code!(@card_code)
     end
 
     def weight
@@ -24,8 +24,12 @@ module Poker
 
     private
 
+    def normalize_code(card_code)
+      card_code.to_s.upcase[0..1]
+    end
+
     def validate_code!(card_code)
-      val, suit = card_code.to_s.upcase[0..1].chars
+      val, suit = card_code.chars
       case
       when !POSSIBLE_VALUES.include?(val)
         raise ArgumentError.new("#{val} is not a possible value")
