@@ -1,4 +1,4 @@
 module Poker
-  autoload :Game, "poker/game"
-  autoload :Hand, "poker/hand"
+  require_relative './poker/game'
+  require_relative './poker/hand'
 end
