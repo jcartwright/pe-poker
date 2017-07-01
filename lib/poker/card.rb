@@ -1,5 +1,7 @@
 module Poker
   class Card
+    include Comparable
+
     POSSIBLE_VALUES = %w(2 3 4 5 6 7 8 9 T J Q K A).freeze
     POSSIBLE_SUITS = %w(H D C S).freeze
 
@@ -8,6 +10,10 @@ module Poker
     def initialize(card_code)
       @card_code = normalize_code(card_code)
       @value, @suit = validate_code!(@card_code)
+    end
+
+    def <=>(other)
+      weight <=> other.weight
     end
 
     def weight
