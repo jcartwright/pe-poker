@@ -226,22 +226,67 @@ RSpec.describe Poker::Hand do
   end
 
   context "as comparable" do
-    it "royal flush beats straight flush"
+    it "royal flush beats straight flush" do
+      royal_flush = Poker::Hand.new(%w(TS JS QS KS AS))
+      straight_flush = Poker::Hand.new(%w(QH TH KH 9H JH))
 
-    it "straight flush beats four of a kind"
+      expect(royal_flush).to be > straight_flush
+    end
 
-    it "four of a kind beats full house"
+    it "straight flush beats four of a kind" do
+      straight_flush = Poker::Hand.new(%w(QH TH KH 9H JH))
+      four_oak = Poker::Hand.new(%w(AS AC AH AD 2C))
 
-    it "full house beats flush"
+      expect(straight_flush).to be > four_oak
+    end
 
-    it "flush beats straight"
+    it "four of a kind beats full house" do
+      four_oak = Poker::Hand.new(%w(AS AC AH AD 2C))
+      full_house = Poker::Hand.new(%w(AC AD AS KH KS))
 
-    it "straight beats three of a kind"
+      expect(four_oak).to be > full_house
+    end
 
-    it "three of a kind beats two pairs"
+    it "full house beats flush" do
+      full_house = Poker::Hand.new(%w(AC AD AS KH KS))
+      flush = Poker::Hand.new(%w(2D 9D 7D JD 3D))
 
-    it "two pairs beats one pair"
+      expect(full_house).to be > flush
+    end
 
-    it "one pair beats high card"
+    it "flush beats straight" do
+      flush = Poker::Hand.new(%w(2D 9D 7D JD 3D))
+      straight = Poker::Hand.new(%w(9D 8H 7C 6S 5D))
+
+      expect(flush).to be > straight
+    end
+
+    it "straight beats three of a kind" do
+      straight = Poker::Hand.new(%w(9D 8H 7C 6S 5D))
+      three_oak = Poker::Hand.new(%w(2S 2D 2H 3C 4D))
+
+      expect(straight).to be > three_oak
+    end
+
+    it "three of a kind beats two pairs" do
+      three_oak = Poker::Hand.new(%w(2S 2D 2H 3C 4D))
+      two_pair = Poker::Hand.new(%w(5S 5D 8H 8C AS))
+
+      expect(three_oak).to be > two_pair
+    end
+
+    it "two pairs beats one pair" do
+      two_pair = Poker::Hand.new(%w(2S 2D 8H 8C AS))
+      one_pair = Poker::Hand.new(%w(2H 2C 8S 7C AD))
+
+      expect(two_pair).to be > one_pair
+    end
+
+    it "one pair beats high card" do
+      one_pair = Poker::Hand.new(%w(2S 2D 8D QC AH))
+      high_card = Poker::Hand.new(%w(AS 3H 4C 5D TS))
+
+      expect(one_pair).to be > high_card
+    end
   end
 end

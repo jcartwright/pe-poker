@@ -25,10 +25,16 @@ class Poker::Hand
   end
 
   def rank
-    # royal flush => all face (ace..ten), all same suit
-    # uniq on suit, face value of 60
     case 
-    when royal_flush? then 100
+    when royal_flush? then 900
+    when straight_flush? then 800
+    when four_of_a_kind? then 700
+    when full_house? then 600
+    when flush? then 500
+    when straight? then 400
+    when three_of_a_kind? then 300
+    when two_pair? then 200
+    when one_pair? then 100
     else
       high_card.weight
     end
