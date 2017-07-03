@@ -349,7 +349,7 @@ RSpec.describe Poker::Hand do
 
     it "two pairs with highest kicker card breaks the tie" do
       winner = Poker::Hand.new(%w(2S 2D 8H 8C AS))
-      loser  = Poker::Hand.new(%w(2H 2C 8S 8C KD))
+      loser  = Poker::Hand.new(%w(2H 2C 8S 8D KD))
 
       expect(winner).to be > loser
     end

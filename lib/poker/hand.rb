@@ -119,7 +119,7 @@ class Poker::Hand
 
   def kicker_weights(cards)
     # select only single (aka 'kicker') cards
-    # and return their weights in descening order
+    # and return their weights in descending order
     kickers = card_groups_by(cards).select { |weight, set| set.size == 1 }
     kickers.sort_by { |weight, set| weight }.reverse.map(&:first)
   end
