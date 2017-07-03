@@ -1,27 +1,21 @@
 class Poker::Hand
-  include Comparable
-
   VALID_CARD_COUNT = 5
 
   attr_reader :cards
 
   def initialize(cards)
-    cards = cards.split if cards.respond_to?(:split)
-    @cards = parse_cards(validate_cards!(cards))
+    @cards = parse_cards(cards)
   end
 
+  include Comparable
   def <=>(other)
-    rank <=> other.rank
-  end
+    lh, rh = rank, other.rank
 
-  def face_value
-    cards.reduce(0) { |sum, card|
-      sum + card.weight
-    }
-  end
-
-  def high_card
-    cards.max
+    if lh != rh # not a tie
+      lh <=> rh
+    else # a possible tie
+      compare_tie_breakers(self, other)
+    end
   end
 
   def rank
@@ -35,17 +29,19 @@ class Poker::Hand
     when three_of_a_kind? then 300
     when two_pair? then 200
     when one_pair? then 100
-    else
-      high_card.weight
+    when high_card? then 0
     end
   end
 
   def royal_flush?
-    face_value == 60 && same_suit?(cards)
+    cards.max.ace? &&
+    same_suit?(cards) &&
+    sequential?(cards)
   end
 
   def straight_flush?
-    same_suit?(cards) && sequential?(cards)
+    same_suit?(cards) &&
+    sequential?(cards)
   end
 
   def four_of_a_kind?
@@ -81,7 +77,20 @@ class Poker::Hand
     card_groups_by(cards, :weight).size < VALID_CARD_COUNT
   end
 
+  def high_card?
+    !same_suit?(cards) &&
+    !sequential?(cards) &&
+    !group_weights(cards).any?
+  end
+
   private
+
+  def parse_cards(cards)
+    cards = cards.split if cards.respond_to?(:split)
+    validate_cards!(cards).map do |card_code|
+      Poker::Card.new(card_code)
+    end.sort.reverse
+  end
 
   def validate_cards!(cards)
     case
@@ -96,14 +105,23 @@ class Poker::Hand
     cards
   end
 
-  def parse_cards(cards)
-    cards.map do |card_code|
-      Poker::Card.new(card_code)
-    end
-  end
-
   def card_groups_by(cards, method = :weight)
     cards.group_by(&method)
+  end
+
+  def group_weights(cards)
+    # select groups with counts > 1
+    # sort them by set size, descending
+    # and return an array of weights
+    groups = card_groups_by(cards, :weight).select { |weight, set| set.size > 1 }
+    groups.sort_by { |weight, set| set.size }.reverse.map(&:first)
+  end
+
+  def kicker_weights(cards)
+    # select only single (aka 'kicker') cards
+    # and return their weights in descening order
+    kickers = card_groups_by(cards).select { |weight, set| set.size == 1 }
+    kickers.sort_by { |weight, set| weight }.reverse.map(&:first)
   end
 
   def same_suit?(cards)
@@ -112,6 +130,46 @@ class Poker::Hand
 
   def sequential?(cards)
     weights = cards.map(&:weight)
+    weights.uniq.size == VALID_CARD_COUNT &&
     (weights.min..weights.max).size == VALID_CARD_COUNT
+  end
+
+  def compare_tie_breakers(lh, rh)
+    case
+    when # hands with no tie-breaker
+      lh.royal_flush? then 0
+    when # hands with sets
+      lh.four_of_a_kind?,
+      lh.full_house?,
+      lh.three_of_a_kind?,
+      lh.two_pair?,
+      lh.one_pair? then compare_card_sets(lh, rh)
+    when # hands without sets
+      lh.straight_flush?,
+      lh.flush?,
+      lh.straight?,
+      lh.high_card? then compare_high_cards(lh.cards, rh.cards)
+    end
+  end
+
+  def compare_high_cards(lh, rh)
+    lc, rc = lh.map(&:weight)
+               .zip(rh.map(&:weight))
+               .find { |set| set[0] != set[1] }
+    lc <=> rc
+  end
+
+  def compare_card_sets(lh, rh)
+    lg, rg = group_weights(lh.cards), group_weights(rh.cards)
+    lw, rw = lg.zip(rg).find { |set| set[0] != set[1] }
+
+    (lw || rw) ? (lw <=> rw) : compare_kicker_cards(lh, rh)
+  end
+
+  def compare_kicker_cards(lh, rh)
+    lkw, rkw = kicker_weights(lh.cards), kicker_weights(rh.cards)
+    lw, rw = lkw.zip(rkw).find { |set| set[0] != set[1] }
+    
+    (lw || rw) ? (lw <=> rw) : 0
   end
 end

@@ -6,7 +6,7 @@ RSpec.describe Poker::Hand do
     it "succeeds with a valid array of cards" do
       card_codes = %w(8C TS KC 9H 4S)
       hand = Poker::Hand.new(card_codes)
-      expect(hand.cards.map(&:card_code)).to eq(card_codes)
+      expect(hand.cards.map(&:card_code)).to eq(["KC", "TS", "9H", "8C", "4S"])
     end
 
     it "succeeds with a valid string of cards" do
@@ -31,30 +31,6 @@ RSpec.describe Poker::Hand do
     end
   end
 
-  describe "#face_value" do
-    it "returns the sum of the face values of all cards" do
-      {
-        36 => %w(5H 5C 6S 7S KD), #=> 5, 5, 6, 7, 13
-        31 => %w(2C 3S 8S 8D TD), #=> 2, 3, 8, 8, 10
-        54 => %w(KH 4H AS JS QS)  #=> 13, 4, 14, 11, 12
-      }.each do |val, cards|
-        expect(Poker::Hand.new(cards).face_value).to eq(val)
-      end
-    end
-  end
-
-  describe "#high_card" do
-    it "returns the card with the highest weight" do
-      {
-        Poker::Card.new('AS') => %w(KH 4H AS JS QS),
-        Poker::Card.new('TS') => %w(2S 8D 8C 4C TS)
-      }.each do |high_card, cards|
-        hand = Poker::Hand.new(cards)
-        expect(hand.high_card).to eq(high_card)
-      end
-    end
-  end
-
   context "named hands" do
     describe "#royal_flush?" do
       it "returns true for a royal flush" do
@@ -70,7 +46,7 @@ RSpec.describe Poker::Hand do
       end
 
       it "returns false if any card is not a face card" do
-        cards = %w(9S JS QH KS AS)
+        cards = %w(9S JS QS KS AS)
         hand = Poker::Hand.new(cards)
         expect(hand).to_not be_royal_flush
       end
@@ -223,6 +199,24 @@ RSpec.describe Poker::Hand do
       end
     end
 
+    describe "#high_card?" do
+      it "returns true when high card is the only rank" do
+        cards = %w(AS QH TD 3C 2S)
+        hand = Poker::Hand.new(cards)
+        expect(hand).to be_high_card
+      end
+
+      it "returns false when a better rank is possible" do
+        [
+          %w(AS AD QH 8C 6D),
+          %w(QH JH TH 9H 8H)
+        ].each do |cards|
+          hand = Poker::Hand.new(cards)
+          expect(hand).to_not be_high_card
+        end
+      end
+    end
+
   end
 
   context "as comparable" do
@@ -233,11 +227,25 @@ RSpec.describe Poker::Hand do
       expect(royal_flush).to be > straight_flush
     end
 
+    it "royal flush has no tie breakers" do
+      lh = Poker::Hand.new(%w(TS JS QS KS AS))
+      rh = Poker::Hand.new(%w(TD JD QD KD AD))
+
+      expect(lh).to eq(rh)
+    end
+
     it "straight flush beats four of a kind" do
       straight_flush = Poker::Hand.new(%w(QH TH KH 9H JH))
       four_oak = Poker::Hand.new(%w(AS AC AH AD 2C))
 
       expect(straight_flush).to be > four_oak
+    end
+
+    it "straight flush with highest card(s) breaks the tie" do
+      winner = Poker::Hand.new(%w(TD 9D 8D 7D 6D))
+      loser  = Poker::Hand.new(%w(9H 8H 7H 6H 5H))
+
+      expect(winner).to be > loser
     end
 
     it "four of a kind beats full house" do
@@ -247,11 +255,35 @@ RSpec.describe Poker::Hand do
       expect(four_oak).to be > full_house
     end
 
+    it "four of a kind with the higher face value set breaks the tie" do
+      winner = Poker::Hand.new(%w(AS AC AH AD 2C))
+      loser  = Poker::Hand.new(%w(KS KC KH KD 2H))
+
+      expect(winner).to be > loser
+
+      winner = Poker::Hand.new(%w(3S 3C 3H 3D 2H))
+      loser  = Poker::Hand.new(%w(2S 2C 2H 2D AC))
+
+      expect(winner).to be > loser
+    end
+
     it "full house beats flush" do
       full_house = Poker::Hand.new(%w(AC AD AS KH KS))
       flush = Poker::Hand.new(%w(2D 9D 7D JD 3D))
 
       expect(full_house).to be > flush
+    end
+
+    it "full house with the highest three of a kind breaks the tie" do
+      winner = Poker::Hand.new(%w(AC AD AS QH QS))
+      loser  = Poker::Hand.new(%w(KC KD KS JH JS))
+
+      expect(winner).to be > loser
+
+      winner = Poker::Hand.new(%w(4C 4D 4S 3H 3S))
+      loser  = Poker::Hand.new(%w(2C 2D 2S AH AS))
+
+      expect(winner).to be > loser
     end
 
     it "flush beats straight" do
@@ -261,11 +293,30 @@ RSpec.describe Poker::Hand do
       expect(flush).to be > straight
     end
 
+    it "flush with the highest card breaks the tie" do
+      winner = Poker::Hand.new(%w(AD TD 9D 8D 6D))
+      loser  = Poker::Hand.new(%w(QH TH 9H 8H 6H))
+
+      expect(winner).to be > loser
+
+      winner = Poker::Hand.new(%w(QD TD 9D 8D 7D))
+      loser  = Poker::Hand.new(%w(QH TH 9H 8H 6H))
+
+      expect(winner).to be > loser
+    end
+
     it "straight beats three of a kind" do
       straight = Poker::Hand.new(%w(9D 8H 7C 6S 5D))
       three_oak = Poker::Hand.new(%w(2S 2D 2H 3C 4D))
 
       expect(straight).to be > three_oak
+    end
+
+    it "straight with the highest face value breaks the tie" do
+      winner = Poker::Hand.new(%w(9D 8H 7C 6S 5D))
+      loser  = Poker::Hand.new(%w(8D 7H 6C 5S 4D))
+
+      expect(winner).to be > loser
     end
 
     it "three of a kind beats two pairs" do
@@ -275,11 +326,32 @@ RSpec.describe Poker::Hand do
       expect(three_oak).to be > two_pair
     end
 
+    it "three of a kind with the higher face value set breaks the tie" do
+      winner = Poker::Hand.new(%w(3S 3D 3H 4C 6D))
+      loser  = Poker::Hand.new(%w(2S 2D 2H 3C 4D))
+
+      expect(winner).to be > loser
+    end
+
     it "two pairs beats one pair" do
       two_pair = Poker::Hand.new(%w(2S 2D 8H 8C AS))
       one_pair = Poker::Hand.new(%w(2H 2C 8S 7C AD))
 
       expect(two_pair).to be > one_pair
+    end
+
+    it "two pairs with highest face value set wins" do
+      winner = Poker::Hand.new(%w(5S 5D 3H 3C 2H))
+      loser  = Poker::Hand.new(%w(4S 4D 2D 2C AD))
+
+      expect(winner).to be > loser
+    end
+
+    it "two pairs with highest kicker card breaks the tie" do
+      winner = Poker::Hand.new(%w(2S 2D 8H 8C AS))
+      loser  = Poker::Hand.new(%w(2H 2C 8S 8C KD))
+
+      expect(winner).to be > loser
     end
 
     it "one pair beats high card" do
@@ -288,5 +360,27 @@ RSpec.describe Poker::Hand do
 
       expect(one_pair).to be > high_card
     end
+
+    it "one pair with the highest face value set wins" do
+      winner = Poker::Hand.new(%w(4S 4D 8D QC AH))
+      loser  = Poker::Hand.new(%w(3S 3D 8C QD AS))
+
+      expect(winner).to be > loser
+    end
+
+    it "one pair with highest kicker card breaks the tie" do
+      winner = Poker::Hand.new(%w(2S 2D 6H 7C AS))
+      loser  = Poker::Hand.new(%w(2H 2C 6S 7H KD))
+
+      expect(winner).to be > loser
+    end
+
+    it "high card breaks the tie" do
+      winner = Poker::Hand.new(%w(5D 8C 9S JS AC))
+      loser  = Poker::Hand.new(%w(2C 5C 7D 8S QH))
+
+      expect(winner).to be > loser
+    end
+
   end
 end
