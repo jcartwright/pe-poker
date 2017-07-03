@@ -28,6 +28,10 @@ module Poker
       @value > 10
     end
 
+    def ace?
+      @value == 'A'
+    end
+
     private
 
     def normalize_code(card_code)

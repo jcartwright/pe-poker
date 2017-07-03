@@ -54,6 +54,12 @@ RSpec.describe Poker::Card do
     end
   end
 
+  describe "#ace?" do
+    it "returns true for an ace" do
+      expect(Poker::Card.new('AS')).to be_ace
+    end
+  end
+
   context "as comparable" do
     it "ace beats king" do
       ace = Poker::Card.new('AS')
